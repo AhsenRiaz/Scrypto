@@ -44,5 +44,11 @@ mod vault_bucket {
 
             bucket
         }
+
+        pub fn burn(&mut self, bucket: Bucket) {
+            assert!(bucket.resource_address() == self.sample_vault.resource_address());
+
+            bucket.burn()
+        }
     }
 }
