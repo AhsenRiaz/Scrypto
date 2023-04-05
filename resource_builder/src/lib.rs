@@ -1,37 +1,67 @@
 use scrypto::prelude::*;
 
 #[blueprint]
-mod hello {
-    struct Hello {
-        // Define what resources and data will be managed by Hello components
-        sample_vault: Vault,
+mod resource_builder_behaviors {
+
+    struct ResourceBehaviors {
+        mintable_vault: Vault,
+        burnable_vault: Vault,
+        non_withdrawable_vault: Vault,
+        soul_bound_vault: Vault,
+        updateable_nft_vault: Vault,
+        rentable_vault: Vault,
     }
 
-    impl Hello {
-        // Implement the functions and methods which will manage those resources and data
+    impl ResourceBehaviors {
+        pub fn instantiate_component() {
+            // mintable resource behavior
+            ResourceBuilder::new_fungible()
+                .metadata("name", "DemoToken")
+                .metadata("symbol", "DEMO")
+                // We are adding the mintable flag here
+                .mintable(rule!(allow_all), LOCKED)
+                .create_with_no_initial_supply();
 
-        // This is a function, and can be called directly on the blueprint once deployed
-        pub fn instantiate_hello() -> ComponentAddress {
-            // Create a new token called "HelloToken," with a fixed supply of 1000, and put that supply into a bucket
-            let my_bucket: Bucket = ResourceBuilder::new_fungible()
-                .metadata("name", "HelloToken")
-                .metadata("symbol", "HT")
-                .mint_initial_supply(1000);
+            // burnable resource behavior
+            ResourceBuilder::new_fungible()
+                .metadata("name", "DemoToken")
+                .metadata("symbol", "DEMO")
+                .mintable(rule!(allow_all), LOCKED)
+                // We are adding the burnable flag here
+                .burnable(rule!(allow_all), LOCKED)
+                .create_with_no_initial_supply();
 
-            // Instantiate a Hello component, populating its vault with our supply of 1000 HelloToken
-            Self {
-                sample_vault: Vault::with_bucket(my_bucket)
-            }
-                .instantiate()
-                .globalize()
-        }
+            // non_withdrawable resource behavior (usecase as a soulbound token)
+            ResourceBuilder::new_fungible()
+                .metadata("name", "DemoToken")
+                .metadata("symbol", "DEMO")
+                // We are adding the restrict_withdraw flag here
+                .restrict_withdraw(rule!(allow_all), LOCKED)
+                .create_with_no_initial_supply();
 
-        // This is a method, because it needs a reference to self.  Methods can only be called on components
-        pub fn free_token(&mut self) -> Bucket {
-            info!("My balance is: {} HelloToken. Now giving away a token!", self.sample_vault.amount());
-            // If the semi-colon is omitted on the last line, the last value seen is automatically returned
-            // In this case, a bucket containing 1 HelloToken is returned
-            self.sample_vault.take(1)
+            // non_depositable resourc behavior (usecase- burn tokens on a certain event)
+            ResourceBuilder::new_fungible()
+                .metadata("name", "DemoToken")
+                .metadata("symbol", "DEMO")
+                // We are adding the restrict_deposit flag here
+                .restrict_deposit(rule!(allow_all), LOCKED)
+                .create_with_no_initial_supply();
+
+            // updateable_nft resource behavior
+            ResourceBuilder::new_integer_non_fungible()
+                .metadata("name", "DemoToken")
+                .metadata("symbol", "DEMO")
+                // We are adding the update NF data flag here
+                .updateable_non_fungible_data(rule!(allow_all), LOCKED)
+                .create_with_no_initial_supply();
+
+            // recallable resource behavior (usecase as rental nfts)
+            ResourceBuilder::new_integer_non_fungible()
+                .metadata("name", "DemoToken")
+                .metadata("symbol", "DEMO")
+                // We are adding the recallable flag here
+                .recallable(rule!(allow_all), LOCKED)
+                .create_with_no_initial_supply();
         }
     }
 }
